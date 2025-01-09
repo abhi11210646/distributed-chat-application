@@ -18,7 +18,7 @@ function App() {
   const ws = useRef(null);
 
   useEffect(() => {
-    ws.current = new WebSocket('ws://192.168.31.212:8080/ws?user=' + user.id);
+    ws.current = new WebSocket('ws://localhost:8080/ws?user=' + user.id);
     ws.current.onopen = () => console.log('Connected to WebSocket');
     ws.current.onmessage = (event) => {
       const data = JSON.parse(event.data);

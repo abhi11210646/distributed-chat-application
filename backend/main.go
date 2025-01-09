@@ -36,7 +36,7 @@ func main() {
 	}
 	fmt.Println("Hostname:", hostname)
 
-	opt, err := redis.ParseURL("redis://:webmail@localhost:6379/")
+	opt, err := redis.ParseURL(os.Getenv("REDIS_URL"))
 	if err != nil {
 		panic(err)
 	}
@@ -89,7 +89,7 @@ func main() {
 			log.Println("Error setting user:", err)
 			return
 		}
-		log.Printf("User %s connected to %s ", user_id, hostname)
+		log.Printf("User '%s' connected to '%s' ", user_id, hostname)
 		// defer func() {
 		// 	conn.Close()
 		// 	delete(connections, user_id)
@@ -106,12 +106,12 @@ func main() {
 				continue
 			}
 			if message.Type == "message" {
-				if receiverConn, ok := connections[message.Message.Receiver]; ok {
-					if err := receiverConn.WriteMessage(websocket.TextMessage, msg); err != nil {
-						log.Println("Error sending message to receiver:", err)
-					}
-					continue
-				}
+				// if receiverConn, ok := connections[message.Message.Receiver]; ok {
+				// 	if err := receiverConn.WriteMessage(websocket.TextMessage, msg); err != nil {
+				// 		log.Println("Error sending message to receiver:", err)
+				// 	}
+				// 	continue
+				// }
 
 				host, err := client.Get(ctx, "user:"+message.Message.Receiver).Result()
 				if err != nil {
@@ -119,6 +119,7 @@ func main() {
 					continue
 				}
 				// Publish message to Redis channel
+				fmt.Println("Publishing message to:", "hostname:"+host)
 				if err = client.Publish(ctx, "hostname:"+host, msg).Err(); err != nil {
 					log.Println("Error publishing message:", err)
 				} else {
@@ -130,5 +131,5 @@ func main() {
 			}
 		}
 	})
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":3000", nil)
 }
