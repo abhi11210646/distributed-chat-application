@@ -18,16 +18,21 @@ function App() {
   const ws = useRef(null);
 
   useEffect(() => {
-    ws.current = new WebSocket('ws://localhost:8080/ws?user=' + user.id);
-    ws.current.onopen = () => console.log('Connected to WebSocket');
-    ws.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setMessages((prevMessages) => [...prevMessages, data.message]);
+    const connectWebSocket = () => {
+      ws.current = new WebSocket('ws://localhost:8080/ws?user=' + user.id);
+      ws.current.onopen = () => console.log('Connected to WebSocket');
+      ws.current.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        setMessages((prevMessages) => [...prevMessages, data.message]);
+      };
+      ws.current.onclose = () => {
+        console.log('WebSocket disconnected, retrying...');
+        setTimeout(connectWebSocket, 1000); // Reconnect after 1 second
+      };
     };
-    ws.current.onclose = () => {
-      console.log('WebSocket disconnected');
-      // setTimeout(connectWebSocket, 1000); // Reconnect after 1 second
-    };
+
+    connectWebSocket();
+
     return () => {
       ws.current.close();
     };
