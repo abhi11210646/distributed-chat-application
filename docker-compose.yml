@@ -1,4 +1,6 @@
 services:
+
+# Redis server that act as a pubsub and 'WebSocket handler'.
   pubsub:
     image: redis
     ports:
@@ -8,8 +10,9 @@ services:
     networks:
       - chatnet
 
+# Websocket Server: This service will listen on port 3000 and run 4 replicas.
   websocketserver:
-    build: ./backend
+    build: ./websocketserver
     environment:
       REDIS_URL: redis://:chatapp@pubsub:6379/0
     depends_on:
@@ -23,12 +26,14 @@ services:
       restart_policy:
         condition: on-failure
 
+# Load Balancer: This service acts as a load balancer for the websocketserver replicas.
+# It listens on port 8080 and forwards requests to the websocketserver replicas.
   loadbalancer:
     image: nginx
     ports:
       - "8080:8080"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./loadbalancer/nginx.conf:/etc/nginx/nginx.conf
     depends_on:
       - websocketserver
     networks:
